@@ -210,9 +210,15 @@
     let fileSha = "";
     let fileContent = "";
 
-    // استرجاع الإعدادات المحفوظة
-    document.getElementById('ghOwner').value = localStorage.getItem('ghOwner') || 'silvsquare-eng';
-    document.getElementById('ghRepo').value = localStorage.getItem('ghRepo') || 'qr-page';
+    // استرجاع الإعدادات المحفوظة وتصحيحها تلقائياً
+    let savedOwner = localStorage.getItem('ghOwner');
+    if (!savedOwner || savedOwner === 'emad-masaud') savedOwner = 'silvsquare-eng';
+    
+    let savedRepo = localStorage.getItem('ghRepo');
+    if (!savedRepo || savedRepo === 'qr-admin' || savedRepo === 'qr-ss' || savedRepo === 'qr-ss-main') savedRepo = 'qr-page';
+
+    document.getElementById('ghOwner').value = savedOwner;
+    document.getElementById('ghRepo').value = savedRepo;
     document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
 
     function showStatus(msg, isError = false) {
@@ -227,7 +233,7 @@
       const token = document.getElementById('ghToken').value.trim();
 
       if (!owner || !repo || !token) {
-        showStatus('الرجاء إدخال رمز قتهاب (Token) أولاً', true);
+        showStatus('الرجاء التأكد من إدخال رمز قتهاب (Token) وتعبئة الحقول', true);
         return;
       }
 
@@ -240,10 +246,23 @@
 
       try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
-          headers: { 'Authorization': `token ${token}` }
+          headers: { 
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
         });
 
-        if (!response.ok) throw new Error('تأكد من صحة رمز قتهاب والصلاحيات.');
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`المستودع "${repo}" غير موجود في حساب "${owner}". تأكد أن اسم المستودع qr-page وليس qr-admin`);
+          } else if (response.status === 401) {
+            throw new Error('رمز قتهاب (Token) غير صالح أو انتهت صلاحيته.');
+          } else if (response.status === 403) {
+            throw new Error('الرمز لا يملك صلاحية تعديل المستودع (repo).');
+          } else {
+            throw new Error(`خطأ قتهاب (${response.status}): تأكد من صحة البيانات.`);
+          }
+        }
 
         const data = await response.json();
         fileSha = data.sha;
@@ -268,7 +287,7 @@
         document.getElementById('btnAdd').style.display = 'block';
         document.getElementById('btnSave').style.display = 'block';
 
-        showStatus('تم جلب البيانات، يمكنك التعديل الآن!');
+        showStatus('✅ تم جلب البيانات بنجاح! يمكنك التعديل الآن.');
       } catch (err) {
         showStatus(err.message, true);
       } finally {

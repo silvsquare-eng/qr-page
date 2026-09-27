@@ -299,12 +299,17 @@
       const container = document.getElementById('reps-container');
       container.innerHTML = '';
 
+      const baseUrl = window.location.origin.includes('github.io') 
+        ? `${window.location.origin}/${document.getElementById('ghRepo').value.trim()}/`
+        : (window.location.protocol.startsWith('http') ? `${window.location.origin}/` : 'https://silvsquare.com/');
+
       currentTeam.forEach((rep, index) => {
+        const repUrl = `${baseUrl}?rep=${rep.id}`;
         const card = document.createElement('div');
         card.className = 'rep-card';
         card.innerHTML = `
           <div>
-            <label style="font-size: 12px; color: #718096;">الرابط (الآي دي)</label>
+            <label style="font-size: 12px; color: #718096;">المعرّف بالرابط (ID)</label>
             <input type="text" value="${rep.id}" onchange="updateRep(${index}, 'id', this.value)" style="width: 100%">
           </div>
           <div>
@@ -325,6 +330,15 @@
               <input type="text" value="${rep.role}" onchange="updateRep(${index}, 'role', this.value)" style="width: 100%">
             </div>
             <button class="btn btn-delete" onclick="deleteRep(${index})" style="margin-top: 18px;">حذف</button>
+          </div>
+          <div class="full-row" style="background: #f8fafc; padding: 8px 12px; border-radius: 8px; align-items: center; justify-content: space-between; border: 1px dashed #cbd5e1;">
+            <div style="font-size: 12px; color: #475569; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; text-align: left;">
+              ${repUrl}
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn" style="padding: 6px 12px; font-size: 12px; background: #3b82f6; color: white;" onclick="navigator.clipboard.writeText('${repUrl}'); alert('تم نسخ رابط ${rep.name} بنجاح!')">نسخ الرابط 📋</button>
+              <a href="${repUrl}" target="_blank" class="btn" style="padding: 6px 12px; font-size: 12px; background: #e2e8f0; color: #1e293b; text-decoration: none;">تجربة 🔗</a>
+            </div>
           </div>
         `;
         container.appendChild(card);

@@ -94,8 +94,8 @@
     <h1>لوحة تحكم فريق المبيعات (تحديث فوري)</h1>
     
     <div class="settings-card">
-      <input type="text" id="ghOwner" placeholder="اسم حساب قتهاب (مثال: emad99)" value="emad-masaud" />
-      <input type="text" id="ghRepo" placeholder="اسم المستودع (مثال: qr-ss-main)" value="qr-ss" />
+      <input type="text" id="ghOwner" placeholder="اسم حساب قتهاب (مثال: silvsquare-eng)" value="silvsquare-eng" />
+      <input type="text" id="ghRepo" placeholder="اسم المستودع (مثال: qr-page)" value="qr-page" />
       <input type="password" id="ghToken" placeholder="رمز قتهاب (GitHub Personal Access Token)" />
       <button class="btn" style="grid-column: span 2; background: var(--primary); color: white;" onclick="loadDataFromGithub()">جلب بيانات الموقع الحالية</button>
     </div>
@@ -125,8 +125,8 @@
     let fileContent = "";
 
     // استرجاع الإعدادات المحفوظة
-    document.getElementById('ghOwner').value = localStorage.getItem('ghOwner') || 'emad-masaud';
-    document.getElementById('ghRepo').value = localStorage.getItem('ghRepo') || 'qr-ss';
+    document.getElementById('ghOwner').value = localStorage.getItem('ghOwner') || 'silvsquare-eng';
+    document.getElementById('ghRepo').value = localStorage.getItem('ghRepo') || 'qr-page';
     document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
 
     function showStatus(msg, isError = false) {

@@ -276,11 +276,13 @@
           renderReps();
         }
 
-        // استخراج رقم ميتا بكسل
-        const pixelMatch = fileContent.match(/fbq\('init',\s*'([^']+)'\)/);
-        if (pixelMatch && pixelMatch[1]) {
+        // استخراج رقم ميتا بكسل بأمان
+        const pixelMatch = fileContent.match(/fbq\('init',\s*'([a-zA-Z0-9_-]+)'\)/);
+        if (pixelMatch && pixelMatch[1] && pixelMatch[1] !== 'YOUR_PIXEL_ID' && pixelMatch[1] !== 'PIXEL_ID_PLACEHOLDER') {
           currentPixelId = pixelMatch[1];
           document.getElementById('metaPixelId').value = currentPixelId;
+        } else {
+          document.getElementById('metaPixelId').value = '';
         }
 
         document.getElementById('meta-settings').style.display = 'block';
@@ -304,6 +306,9 @@
         : (window.location.protocol.startsWith('http') ? `${window.location.origin}/` : 'https://silvsquare.com/');
 
       currentTeam.forEach((rep, index) => {
+        // تنظيف رقم الهاتف من أي رموز مخفية
+        rep.phone = (rep.phone || '').replace(/[^0-9]/g, '');
+        
         const repUrl = `${baseUrl}?rep=${rep.id}`;
         const card = document.createElement('div');
         card.className = 'rep-card';
@@ -346,6 +351,7 @@
     }
 
     function updateRep(index, field, value) {
+      if (field === 'phone') value = value.replace(/[^0-9]/g, '');
       currentTeam[index][field] = value;
     }
 
@@ -378,6 +384,11 @@
         return;
       }
 
+      // تنظيف أرقام الهواتف لجميع المناديب
+      currentTeam.forEach(rep => {
+        rep.phone = (rep.phone || '').replace(/[^0-9]/g, '');
+      });
+
       document.getElementById('loading').style.display = 'block';
       showStatus('جاري النشر، لا تقفل الصفحة...');
 
@@ -388,10 +399,11 @@
         const newJsonStr = JSON.stringify(currentTeam, null, 6);
         newFileContent = newFileContent.replace(/(const salesTeam = )\[[\s\S]*?\];/, `$1${newJsonStr};`);
 
-        // تحديث الميتا بكسل في الكود
-        if (newPixelId) {
-          newFileContent = newFileContent.replace(/fbq\('init',\s*'[^']+'\)/g, `fbq('init', '${newPixelId}')`);
-          newFileContent = newFileContent.replace(/id=[^&]+&ev=PageView/g, `id=${newPixelId}&ev=PageView`);
+        // تحديث الميتا بكسل بأمان تام
+        const cleanPixelId = newPixelId.replace(/[^0-9]/g, '');
+        if (cleanPixelId) {
+          newFileContent = newFileContent.replace(/fbq\('init',\s*'[^']+'\)/g, `fbq('init', '${cleanPixelId}')`);
+          newFileContent = newFileContent.replace(/facebook\.com\/tr\?id=[^&]+/g, `facebook.com/tr?id=${cleanPixelId}`);
         }
 
         const base64Content = window.btoa(unescape(encodeURIComponent(newFileContent)));

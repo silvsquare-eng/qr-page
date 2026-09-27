@@ -94,9 +94,18 @@
     <h1>لوحة تحكم فريق المبيعات (تحديث فوري)</h1>
     
     <div class="settings-card">
-      <input type="text" id="ghOwner" placeholder="اسم حساب قتهاب (مثال: silvsquare-eng)" value="silvsquare-eng" />
-      <input type="text" id="ghRepo" placeholder="اسم المستودع (مثال: qr-page)" value="qr-page" />
-      <input type="password" id="ghToken" placeholder="رمز قتهاب (GitHub Personal Access Token)" />
+      <div>
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--primary);">اسم حساب قتهاب (Owner)</label>
+        <input type="text" id="ghOwner" placeholder="مثال: silvsquare-eng" value="silvsquare-eng" style="width: 100%;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--primary);">اسم المستودع (Repository)</label>
+        <input type="text" id="ghRepo" placeholder="مثال: qr-page" value="qr-page" style="width: 100%;" />
+      </div>
+      <div style="grid-column: span 2;">
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--primary);">رمز قتهاب (GitHub Personal Access Token)</label>
+        <input type="password" id="ghToken" placeholder="الصق الرمز الذي يبدأ بـ ghp_ هنا" style="width: 100%;" />
+      </div>
       <button class="btn" style="grid-column: span 2; background: var(--primary); color: white;" onclick="loadDataFromGithub()">جلب بيانات الموقع الحالية</button>
     </div>
 
@@ -141,7 +150,7 @@
       const token = document.getElementById('ghToken').value.trim();
 
       if (!owner || !repo || !token) {
-        showStatus('الرجاء إدخال رمز قتهاب (Token) أولاً', true);
+        showStatus('الرجاء إدخال رمز قتهاب (Token) والتأكد من تعبئة جميع الحقول', true);
         return;
       }
 
@@ -154,10 +163,23 @@
 
       try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
-          headers: { 'Authorization': `token ${token}` }
+          headers: { 
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
         });
 
-        if (!response.ok) throw new Error('تأكد من صحة رمز قتهاب والصلاحيات.');
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`المستودع "${repo}" غير موجود في حساب "${owner}". تأكد من كتابة qr-page`);
+          } else if (response.status === 401) {
+            throw new Error('رمز قتهاب (Token) غير صالح أو انتهت صلاحيته.');
+          } else if (response.status === 403) {
+            throw new Error('الرمز لا يملك صلاحية الوصول إلى repo. تأكد من تفعيل خيار repo عند إنشاء Token.');
+          } else {
+            throw new Error(`خطأ (${response.status}): تأكد من صحة البيانات والصلاحيات.`);
+          }
+        }
 
         const data = await response.json();
         fileSha = data.sha;
@@ -182,7 +204,7 @@
         document.getElementById('btnAdd').style.display = 'block';
         document.getElementById('btnSave').style.display = 'block';
         
-        showStatus('تم جلب البيانات، يمكنك التعديل الآن!');
+        showStatus('تم جلب البيانات بنجاح! يمكنك التعديل الآن.');
       } catch (err) {
         showStatus(err.message, true);
       } finally {
